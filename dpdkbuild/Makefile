@@ -9,6 +9,8 @@ include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
 
 .PHONY: all clean install uninstall
 
+MESON ?= meson
+
 DPDK_OPTS = -Denable_docs=false
 DPDK_OPTS += -Dtests=false
 DPDK_CFLAGS =
@@ -164,12 +166,12 @@ all: $(SPDK_ROOT_DIR)/dpdk/build-tmp
 		env -u MAKEFLAGS DESTDIR=$(SPDK_ROOT_DIR)/dpdk/build ninja -C $(SPDK_ROOT_DIR)/dpdk/build-tmp $(MAKE_NUMJOBS) install > /dev/null && \
 		mv $(SPDK_ROOT_DIR)/dpdk/build/boot/modules $(SPDK_ROOT_DIR)/dpdk/build/kmod; \
 	else \
-		env -u MAKEFLAGS meson install -C $(SPDK_ROOT_DIR)/dpdk/build-tmp --only-changed > /dev/null; \
+		env -u MAKEFLAGS $(MESON) install -C $(SPDK_ROOT_DIR)/dpdk/build-tmp --only-changed > /dev/null; \
 	fi
 
 $(SPDK_ROOT_DIR)/dpdk/build-tmp: $(SPDK_ROOT_DIR)/mk/cc.mk $(SPDK_ROOT_DIR)/include/spdk/config.h
 	$(Q)rm -rf $(SPDK_ROOT_DIR)/dpdk/build $(SPDK_ROOT_DIR)/dpdk/build-tmp
-	$(Q)cd "$(SPDK_ROOT_DIR)/dpdk"; CC="$(SUB_CC)" meson --prefix="$(MESON_PREFIX)" --libdir lib -Dc_args="$(DPDK_CFLAGS)" -Dc_link_args="$(DPDK_LDFLAGS)" $(DPDK_OPTS) -Denable_drivers="$(shell echo $(DPDK_DRIVERS) | sed -E "s/ +/,/g")" -Ddisable_libs="$(shell echo $(DPDK_DISABLED_LIBS) | sed -E "s/ +/,/g")" $(DPDKBUILD_FLAGS) build-tmp
+	$(Q)cd "$(SPDK_ROOT_DIR)/dpdk"; CC="$(SUB_CC)" $(MESON) --prefix="$(MESON_PREFIX)" --libdir lib -Dc_args="$(DPDK_CFLAGS)" -Dc_link_args="$(DPDK_LDFLAGS)" $(DPDK_OPTS) -Denable_drivers="$(shell echo $(DPDK_DRIVERS) | sed -E "s/ +/,/g")" -Ddisable_libs="$(shell echo $(DPDK_DISABLED_LIBS) | sed -E "s/ +/,/g")" $(DPDKBUILD_FLAGS) build-tmp
 	$(Q)sed $(SED_INPLACE_FLAG) 's/#define RTE_EAL_PMD_PATH .*/#define RTE_EAL_PMD_PATH ""/g' $(SPDK_ROOT_DIR)/dpdk/build-tmp/rte_build_config.h
 	$(Q) \
 	# TODO Meson build adds libbsd and/or libarchive dependency when it's available. This means any app will be \

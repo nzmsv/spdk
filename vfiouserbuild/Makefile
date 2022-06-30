@@ -8,6 +8,8 @@ include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
 
 .PHONY: all clean install uninstall
 
+MESON ?= meson
+
 # Force-disable scan-build: we support it below, but meson has its own special
 # target instead of allowing CC=scan-build like everyone else.
 SUB_CC = $(patsubst %ccc-analyzer,$(DEFAULT_CC),$(CC))
@@ -18,10 +20,10 @@ all: scan-build
 
 build:
 	$(Q)test -d $(VFIO_USER_BUILD_DIR) || \
-	     CC=$(SUB_CC) meson setup $(VFIO_USER_BUILD_DIR) $(VFIO_USER_SRC_DIR)
-	$(Q)meson configure $(VFIO_USER_BUILD_DIR) $(VFIO_USER_CFG_OPTS)
-	$(Q)meson compile $(MESON_COMPILE_OPTS) -C $(VFIO_USER_BUILD_DIR)
-	DESTDIR=$(VFIO_USER_INSTALL_DIR) meson install --quiet -C $(VFIO_USER_BUILD_DIR)
+	     CC=$(SUB_CC) $(MESON) setup $(VFIO_USER_BUILD_DIR) $(VFIO_USER_SRC_DIR)
+	$(Q)$(MESON) configure $(VFIO_USER_BUILD_DIR) $(VFIO_USER_CFG_OPTS)
+	$(Q)$(MESON) compile $(MESON_COMPILE_OPTS) -C $(VFIO_USER_BUILD_DIR)
+	DESTDIR=$(VFIO_USER_INSTALL_DIR) $(MESON) install --quiet -C $(VFIO_USER_BUILD_DIR)
 
 scan-build: build
 	$(Q)if [ $(CC) = "scan-build" ]; then \
